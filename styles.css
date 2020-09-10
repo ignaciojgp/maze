@@ -1,0 +1,40 @@
+body{
+    background: gray;
+    padding: 10px;
+}
+
+.room{
+    background: white;
+    border:rgb(82, 82, 82) solid 2px;
+    min-width: 5px;
+    min-height: 5px;
+    box-sizing: border-box;
+    position: absolute;
+}
+
+#canvas, #grid{
+    position: fixed;
+    z-index: 10;
+    top: 0;
+    left: 0;
+    width: 500px;
+    height: 500px;
+    border: rgb(126, 126, 126) solid 1px;
+    background: rgba(255, 255, 255, 0.24);
+    overflow: hidden;
+}
+#grid{
+    z-index: 0 !important;
+    left: -1px;
+    top: -1px;
+}
+
+
+.tile{
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border: rgb(175, 175, 175) solid 1px;
+    box-sizing: border-box;
+    
+}
