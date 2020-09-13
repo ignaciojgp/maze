@@ -2,14 +2,14 @@ var ocupiedTiles = []
 
 
 function createMaze(size){
-    print("creating maze")
+    console.log("creating maze")
     var maze = getRooms(size)
 
     locateRooms(maze)
 
 
     //normalize locations
-    normalizePositions(maze)
+    //normalizePositions(maze)
     
     
     return maze;
@@ -22,8 +22,8 @@ function normalizePositions(rooms){
 
     rooms.forEach(element => {
         
-        var minRoomTilePosX = element.position.x - element.size.w/2;
-        var minRoomTilePosY = element.position.y - element.size.h/2;
+        var minRoomTilePosX = element.position.x - Math.floor(element.size.w/2);
+        var minRoomTilePosY = element.position.y - Math.floor(element.size.h/2);
         
         minTilePosX = Math.min(minTilePosX,minRoomTilePosX)
         minTilePosY = Math.min(minTilePosY,minRoomTilePosY)
@@ -57,15 +57,15 @@ function getRooms(size){
 function getRandomRoom(){
 
     var rooms = [
-        {w:4,h:4},
-        {w:4,h:6},
-        {w:6,h:4},
-        {w:6,h:6},
-        {w:4,h:8},
-        {w:8,h:4},
-        {w:6,h:8},
-        {w:8,h:6},
-        {w:8,h:8}
+        {w:3,h:3},
+        {w:3,h:5},
+        {w:5,h:3},
+        {w:5,h:5},
+        {w:3,h:9},
+        {w:9,h:3},
+        {w:5,h:9},
+        {w:9,h:5},
+        {w:9,h:9}
     ]
 
     return  rooms[(Math.floor(Math.random()*rooms.length))]
@@ -73,12 +73,13 @@ function getRandomRoom(){
 
 function locateRooms(rooms){
 
-    rooms.forEach(element => {
+    rooms.forEach((element,i) => {
         
         var located = rooms.filter(function (room){
             return room.position != null
         })
 
+        console.log("locateSingleRoom room "+i)
         locateSingleRoom(element)
 
     });
@@ -86,13 +87,14 @@ function locateRooms(rooms){
 }
 
 function locateSingleRoom(room){
-    room.position = {x:0,y:0}
 
     if(ocupiedTiles.length == 0){
+        room.position = {x:0,y:0}
 
         var newTiles = getCollitionTiles(room.size,room.position,1)
         ocupiedTiles = ocupiedTiles.concat(newTiles)
-        print(ocupiedTiles.length)
+        room.tiles = ocupiedTiles
+        console.log(ocupiedTiles.length)
 
     }else{
 
@@ -100,63 +102,95 @@ function locateSingleRoom(room){
             return tile.tileType == 1
         })
 
-        print(marginTiles.length)
 
-        var randomTile = marginTiles[Math.floor(Math.random()*marginTiles.length)]
-
-        print(randomTile)
-        var candidateTiles = getUnocupiedDirectionsForTile(randomTile)
-
-        print(ocupiedTiles)
-        print(candidateTiles)
-        debugger
-        /*
-        var lastPosition = locatedRooms[locatedRooms.length-1].position;
-        var lastRoom = locatedRooms[locatedRooms.length-1];
-        var sugestedPosition = {x:0,y:0}
-
-
-        var xDisplacement = Math.floor(lastRoom.size.w / 2)+ Math.floor(room.size.w / 2) + 1
-        var yDisplacement = Math.floor(lastRoom.size.h / 2)+ Math.floor(room.size.h / 2) + 1
-
-        var direction = Math.floor(Math.random()*4)
-
-        //random direction
-        switch (direction){
-            case 0://top
-                sugestedPosition = {
-                    x: lastPosition.x,
-                    y: lastPosition.y + yDisplacement
-                }
-            break;
-            case 1://right
-                sugestedPosition = {
-                    x: lastPosition.x + xDisplacement,
-                    y: lastPosition.y
-                }
-            break;
-            case 2://bottom
-                sugestedPosition = {
-                    x: lastPosition.x,
-                    y: lastPosition.y - yDisplacement
-                }
-            break;
-            case 3://left
-                sugestedPosition = {
-                    x: lastPosition.x - xDisplacement,
-                    y: lastPosition.y
-                }
-            break;
-        }
         
+        while(room.position == null){
+            console.log(marginTiles.length)
+            var randomTile = marginTiles[Math.floor(Math.random()*marginTiles.length)]
+            console.log("marginTiles")
+            console.log(marginTiles.length)
+            console.log(randomTile)
+            marginTiles.splice(marginTiles.indexOf(randomTile),1)
+            console.log(marginTiles.length)
+
+            var candidateDirections = getUnocupiedDirectionsForTile(randomTile)
+            //TODO: sort random candidates
+
+            candidateDirections.forEach(direction => {
+                
+
+                var sugestedRoomPosition = getPositionForRommAtDirectionIfNotCollide(room,direction)
+                console.log("sugested position = "+sugestedRoomPosition)
+                if(sugestedRoomPosition != null){
+                    console.log("positioned on x"+sugestedRoomPosition.x+" y"+sugestedRoomPosition.y)
+                    room.position = sugestedRoomPosition
+                    room.tiles = getCollitionTiles(room.size,room.position,1)
+                    ocupiedTiles = ocupiedTiles.concat(room.tiles)                    
+                }
 
 
+            });
 
-        while(willCollideRoom(room, sugestedPosition, locatedRooms)){
-            
+        }
 
-        }*/
+
+        console.log(ocupiedTiles)
+         
     }
+}
+
+function getPositionForRommAtDirectionIfNotCollide(room, direction){
+    var xDisplacement = Math.floor(room.size.w/2)
+    var yDisplacement = Math.floor(room.size.h/2)
+
+    var position = null
+
+    switch(direction.direction){
+        case "Top":
+            position = { x: direction.x , y: direction.y - yDisplacement}
+            break
+        case "TopRight":
+            position = { x: direction.x + xDisplacement , y: direction.y - yDisplacement}
+            break
+        case "Right":
+            position = { x: direction.x + xDisplacement, y: direction.y}
+            break
+        case "BottomRight":
+            position = { x: direction.x + xDisplacement, y: direction.y + yDisplacement}
+            break
+        case "Bottom":
+            position = { x: direction.x , y: direction.y + yDisplacement}
+            break
+        case "BottomLeft":
+            position = { x: direction.x - xDisplacement, y: direction.y + yDisplacement}
+            break
+        case "Left":
+            position = { x: direction.x - xDisplacement, y: direction.y}
+            break
+        case "TopLeft":
+            position = { x: direction.x - xDisplacement, y: direction.y - yDisplacement}
+            break
+    }
+
+    console.log("trying with position x"+position.x+" y"+position.y )
+    var collitionTilesAtPosition =  getCollitionTiles(room.size,position,0)
+
+    var allTilesPassClean = collitionTilesAtPosition.filter(function(collitionTile){
+        return ocupiedTiles.filter(function(ocupiedTIle){
+            return ocupiedTIle.x == collitionTile.x && ocupiedTIle.y == collitionTile.y
+        }).length == 0
+    }).length == collitionTilesAtPosition.length
+
+    console.log(allTilesPassClean)
+
+    if(allTilesPassClean)
+        return position
+    else
+        return null
+
+
+
+
 }
 
 
@@ -166,24 +200,26 @@ function willCollideRoom( room , position,  locatedRooms){
 
     var roomTileMatrix = getCollitionTiles(room.size,position,1)
 
-
-
     return false
 
 }
 
 function getCollitionTiles(roomsize, position, margin){
     var tileMatrix = []
-    for(var row = - margin; row < roomsize.h+margin; row++){
-        for(var col = - margin; col < roomsize.w+margin; col++){
+    var leftTile = - (Math.floor(roomsize.w/2) + margin)+position.x
+    var topTile = - (Math.floor(roomsize.h/2) + margin)+position.y
 
 
-            var tileType = row < 0 || row > roomsize.w-1 || col < 0 || col > roomsize.h-1 ? 1 : 0
+
+    for(var row = 0; row < roomsize.h+margin*2; row++){
+        for(var col = 0; col < roomsize.w+margin*2; col++){
+
+            var tileType = row < margin || row > roomsize.w+margin || col < margin || col > roomsize.h+margin ? 1 : 0
 
             tileMatrix.push(
                 {
-                    x: (position.x - (roomsize.w / 2)) + col,
-                    y: (position.y - (roomsize.h / 2)) + row,
+                    x: leftTile + col,
+                    y: topTile + row,
                     tileType : tileType                    
                 }
             )
@@ -200,14 +236,14 @@ function getUnocupiedDirectionsForTile(tile){
     
     //posibles direcciones
     var adjacentTiles = [
-        {x:tile.x,y:tile.y-1,direction:"Top"},
-        {x:tile.x+1,y:tile.y-1, direction:"TopRight"},
-        {x:tile.x+1,y:tile.y, direction:"Right"},
-        {x:tile.x+1,y:tile.y+1, direction:"BottomRight"},
-        {x:tile.x,y:tile.y+1, direction:"Bottom"},
-        {x:tile.x-1,y:tile.y+1, direction:"BottomLeft"},
-        {x:tile.x-1,y:tile.y, direction:"Left"},
-        {x:tile.x-1,y:tile.y-1, direction:"TopLeft"},
+        {x:tile.x,      y:tile.y-1, direction:"Top"},
+        {x:tile.x+1,    y:tile.y-1, direction:"TopRight"},
+        {x:tile.x+1,    y:tile.y,   direction:"Right"},
+        {x:tile.x+1,    y:tile.y+1, direction:"BottomRight"},
+        {x:tile.x,      y:tile.y+1, direction:"Bottom"},
+        {x:tile.x-1,    y:tile.y+1, direction:"BottomLeft"},
+        {x:tile.x-1,    y:tile.y,   direction:"Left"},
+        {x:tile.x-1,    y:tile.y-1, direction:"TopLeft"},
     ] 
 
     //filtra la lista de adyacentes
@@ -222,7 +258,3 @@ function getUnocupiedDirectionsForTile(tile){
 
 }
 
-
-function print(value){
-    console.log(value)
-}

@@ -13,6 +13,7 @@ function renderMaze(maze){
     maze.forEach(element => {
         var roomRectangle = document.createElement("div")
         roomRectangle.classList.add("room")
+        roomRectangle.innerHTML = maze.indexOf(element)
         roomRectangle.style.height = element.size.h * tileSize+"px"
         roomRectangle.style.width = element.size.w * tileSize+"px"
         roomRectangle.style.top = element.position.y * tileSize+"px";
