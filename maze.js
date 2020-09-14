@@ -27,9 +27,17 @@ function createMaze(size){
     //normalize locations
     normalizePositions(maze)
     
-    
-    return {rooms:maze, corridors: marginTiles, ocupiedTiles:ocupiedTiles};
+    var corridors = getCorridors(maze)
 
+
+
+    return {rooms:maze, corridors: corridors, ocupiedTiles:ocupiedTiles};
+
+}
+
+
+function getCorridors(rooms){
+    
 }
 
 function normalizePositions(rooms){
