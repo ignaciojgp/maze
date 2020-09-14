@@ -1,4 +1,5 @@
-var ocupiedTiles = []
+//var ocupiedTiles = []
+
 
 
 function createMaze(size){
@@ -8,11 +9,26 @@ function createMaze(size){
     locateRooms(maze)
 
 
+    var ocupiedTiles = []
+
+    maze.forEach(room => {
+        if(room.tiles)
+            ocupiedTiles = ocupiedTiles.concat(room.tiles)
+    });
+
+
+
+    var marginTiles = ocupiedTiles.filter(tile=>{
+        return tile.tileType == 1
+
+    })
+
+
     //normalize locations
-    //normalizePositions(maze)
+    normalizePositions(maze)
     
     
-    return maze;
+    return {rooms:maze, corridors: marginTiles, ocupiedTiles:ocupiedTiles};
 
 }
 
@@ -27,15 +43,28 @@ function normalizePositions(rooms){
         
         minTilePosX = Math.min(minTilePosX,minRoomTilePosX)
         minTilePosY = Math.min(minTilePosY,minRoomTilePosY)
-
-
     });
-    console.log("minTilePosX "+minTilePosX +" minTilePosY"+minTilePosY)
+
 
     rooms.forEach(element => {
         element.position.x += Math.abs(minTilePosX)
         element.position.y += Math.abs(minTilePosY)
+
+        element.tiles.forEach(tile=>{
+            tile.x += Math.abs(minTilePosX)
+            tile.y += Math.abs(minTilePosY)
+        })
+
+
     });
+
+
+/*    ocupiedTiles.forEach(tile=>{
+        tile.x += Math.abs(minTilePosX)
+        tile.y += Math.abs(minTilePosY)
+    })*/
+
+
 
 }
 
@@ -79,22 +108,34 @@ function locateRooms(rooms){
             return room.position != null
         })
 
+        console.log("--------------------------------------------------------------------")
+        console.log("--------------------------------------------------------------------")
+        console.log("--------------------------------------------------------------------")
         console.log("locateSingleRoom room "+i)
-        locateSingleRoom(element)
+
+
+
+        var ocupiedTiles = []
+
+        rooms.forEach(room => {
+            if(room.tiles)
+                ocupiedTiles = ocupiedTiles.concat(room.tiles)
+        });
+
+        locateSingleRoom(element, ocupiedTiles)
 
     });
 
 }
 
-function locateSingleRoom(room){
+function locateSingleRoom(room, ocupiedTiles){
 
     if(ocupiedTiles.length == 0){
         room.position = {x:0,y:0}
 
-        var newTiles = getCollitionTiles(room.size,room.position,1)
-        ocupiedTiles = ocupiedTiles.concat(newTiles)
-        room.tiles = ocupiedTiles
-        console.log(ocupiedTiles.length)
+        room.tiles = getCollitionTiles(room.size,room.position,1)
+        ocupiedTiles = ocupiedTiles.concat(room.tiles)
+ 
 
     }else{
 
@@ -107,25 +148,24 @@ function locateSingleRoom(room){
         while(room.position == null){
             console.log(marginTiles.length)
             var randomTile = marginTiles[Math.floor(Math.random()*marginTiles.length)]
-            console.log("marginTiles")
-            console.log(marginTiles.length)
+            console.log("random Tile")
             console.log(randomTile)
             marginTiles.splice(marginTiles.indexOf(randomTile),1)
-            console.log(marginTiles.length)
+            
 
-            var candidateDirections = getUnocupiedDirectionsForTile(randomTile)
+            var candidateDirections = getUnocupiedDirectionsForTile(randomTile, ocupiedTiles)
             //TODO: sort random candidates
 
             candidateDirections.forEach(direction => {
                 
 
-                var sugestedRoomPosition = getPositionForRommAtDirectionIfNotCollide(room,direction)
+                var sugestedRoomPosition = getPositionForRommAtDirectionIfNotCollide(room,direction, ocupiedTiles)
                 console.log("sugested position = "+sugestedRoomPosition)
                 if(sugestedRoomPosition != null){
                     console.log("positioned on x"+sugestedRoomPosition.x+" y"+sugestedRoomPosition.y)
                     room.position = sugestedRoomPosition
                     room.tiles = getCollitionTiles(room.size,room.position,1)
-                    ocupiedTiles = ocupiedTiles.concat(room.tiles)                    
+
                 }
 
 
@@ -139,7 +179,7 @@ function locateSingleRoom(room){
     }
 }
 
-function getPositionForRommAtDirectionIfNotCollide(room, direction){
+function getPositionForRommAtDirectionIfNotCollide(room, direction, ocupiedTiles){
     var xDisplacement = Math.floor(room.size.w/2)
     var yDisplacement = Math.floor(room.size.h/2)
 
@@ -214,7 +254,7 @@ function getCollitionTiles(roomsize, position, margin){
     for(var row = 0; row < roomsize.h+margin*2; row++){
         for(var col = 0; col < roomsize.w+margin*2; col++){
 
-            var tileType = row < margin || row > roomsize.w+margin || col < margin || col > roomsize.h+margin ? 1 : 0
+            var tileType = row < margin || col < margin || row > roomsize.h || col > roomsize.w ? 1 : 0
 
             tileMatrix.push(
                 {
@@ -232,7 +272,7 @@ function getCollitionTiles(roomsize, position, margin){
 }
 
 
-function getUnocupiedDirectionsForTile(tile){
+function getUnocupiedDirectionsForTile(tile, ocupiedTiles){
     
     //posibles direcciones
     var adjacentTiles = [
